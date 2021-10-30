@@ -1,6 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-
+Parameters:
+  pythonVersion:
+    Type: String
+    Default: python3.8
+  lambdaLayerARN:
+    Type: String
+    Default: 'arn:aws:lambda:us-east-2:735029168602:layer:TravelMapLambdaLayer:26'
 Resources:
   ScrapMapAPIs:
     Type: AWS::ApiGateway::RestApi
