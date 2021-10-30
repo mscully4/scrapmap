@@ -7,6 +7,9 @@ Parameters:
   lambdaLayerARN:
     Type: String
     Default: 'arn:aws:lambda:us-east-2:735029168602:layer:TravelMapLambdaLayer:26'
+  apiStageName:
+    Type: String
+    Default: dev
 Resources:
   ScrapMapAPIs:
     Type: AWS::ApiGateway::RestApi
