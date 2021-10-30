@@ -32,3 +32,51 @@ Resources:
       RestApiId: !Ref restApiId
       ParentId: !Ref rootResourceId
       PathPart: auth
+
+  ### /auth/create_user ###
+  CreateUserResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref restApiId
+      ParentId: !Ref AuthResource
+      PathPart: create_user
+
+  CreateUserMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt CreateUserFunction.Arn
+      ResourceId: !Ref CreateUserResource
+      RestApiId: !Ref restApiId
+
+  CreateUserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: !Ref pythonVersion
+      CodeUri: ./create_user/
+      Description: 'A function for creating users'
+      MemorySize: 128
+      Timeout: 3
+      Role: 'arn:aws:iam::735029168602:role/Travelmap-Lambda'
+      Environment:
+        Variables:
+          PYTHONPATH: !Ref pythonPath
+          USER_POOL_ID: !Ref cognitoUserPoolId
+          CLIENT_ID: !Ref cognitoClientId
+          CLIENT_SECRET: !Ref cognitoClientSecret
+
+  CreateUserInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CreateUserFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/create_user"
+  
