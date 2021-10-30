@@ -15,4 +15,14 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties: 
       Name: ScrapMapAPIs
+  Auth:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties: 
+      TemplateURL: ./auth/auth.yaml
+      Parameters:
+        stageName: !Ref apiStageName
+        rootResourceId: !GetAtt ScrapMapAPIs.RootResourceId
+        restApiId: !Ref ScrapMapAPIs
+        pythonVersion: !Ref pythonVersion
+        lambdaLayerARN: !Ref lambdaLayerARN
 
