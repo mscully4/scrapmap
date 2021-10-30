@@ -80,3 +80,49 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/create_user"
   
+  ### /auth/verify_user ###
+  AuthVerifyUserResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref restApiId
+      ParentId: !Ref AuthResource
+      PathPart: verify_user
+
+  VerifyUserMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt VerifyUserFunction.Arn
+      ResourceId: !Ref AuthVerifyUserResource
+      RestApiId: !Ref restApiId
+
+  VerifyUserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./verify_user/
+      Description: 'A function for retrieving verifying users'
+      MemorySize: 128
+      Timeout: 3
+      Role: 'arn:aws:iam::735029168602:role/Travelmap-Lambda'
+      Environment:
+        Variables:
+          PYTHONPATH: !Ref pythonPath
+          USER_POOL_ID: !Ref cognitoUserPoolId
+          CLIENT_ID: !Ref cognitoClientId
+          CLIENT_SECRET: !Ref cognitoClientSecret
+
+  VerifyUserInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref VerifyUserFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/verify_user"
