@@ -3,7 +3,11 @@ Transform: 'AWS::Serverless-2016-10-31'
 Description: ""
 
 Parameters:
-  apiGatewayStageName:
+  pythonPath:
+    Type: String
+  pythonVersion:
+    Type: String
+  apiStageName:
     Type: String
   rootResourceId:
     Type: String
@@ -12,6 +16,12 @@ Parameters:
   pythonVersion:
     Type: String
   lambdaLayerARN:
+    Type: String
+  cognitoUserPoolId:
+    Type: String
+  cognitoClientId:
+    Type: String
+  cognitoClientSecret:
     Type: String
 
 Resources:

@@ -29,9 +29,13 @@ Resources:
     Properties: 
       TemplateURL: ./auth/auth.yaml
       Parameters:
-        stageName: !Ref apiStageName
+        apiStageName: !Ref apiStageName
         rootResourceId: !GetAtt ScrapMapAPIs.RootResourceId
         restApiId: !Ref ScrapMapAPIs
+        pythonPath: !Ref pythonPath
         pythonVersion: !Ref pythonVersion
         lambdaLayerARN: !Ref lambdaLayerARN
+        cognitoUserPoolId: !Ref cognitoUserPoolId
+        cognitoClientId: !Ref cognitoClientId
+        cognitoClientSecret: !Ref cognitoClientSecret
 
