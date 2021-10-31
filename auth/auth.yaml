@@ -221,6 +221,53 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/change_password"
 
+  ### /auth/forgot_password ###
+  ForgotPasswordResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref restApiId
+      ParentId: !Ref AuthResource
+      PathPart: forgot_password
+  
+  ForgotPasswordMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt ForgotPasswordFunction.Arn
+      ResourceId: !Ref ForgotPasswordResource
+      RestApiId: !Ref restApiId
+
+  ForgotPasswordFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./forgot_password/
+      Description: 'A function for resending the verification code'
+      MemorySize: 128
+      Timeout: 3
+      Role: 'arn:aws:iam::735029168602:role/Travelmap-Lambda'
+      Environment:
+        Variables:
+          PYTHONPATH: !Ref pythonPath
+          USER_POOL_ID: !Ref cognitoUserPoolId
+          CLIENT_ID: !Ref cognitoClientId
+          CLIENT_SECRET: !Ref cognitoClientSecret
+
+  ForgotPasswordInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ForgotPasswordFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/forgot_password"
+
   AuthAPIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
@@ -228,6 +275,7 @@ Resources:
       - VerifyUserMethod
       - LoginMethod
       - ChangePasswordMethod
+      - ForgotPasswordMethod
     Properties:
       RestApiId: !Ref restApiId
       StageName: !Ref apiStageName
