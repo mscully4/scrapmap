@@ -126,3 +126,60 @@ Resources:
       FunctionName: !Ref VerifyUserFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/verify_user"
+
+  ### /auth/login ###
+  LoginResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref restApiId
+      ParentId: !Ref AuthResource
+      PathPart: login
+  
+  LoginMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt LoginFunction.Arn
+      ResourceId: !Ref LoginResource
+      RestApiId: !Ref restApiId
+
+  LoginFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./login/
+      Description: 'A function for generating authorization tokens'
+      MemorySize: 128
+      Timeout: 3
+      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Environment:
+        Variables:
+          PYTHONPATH: !Ref pythonPath
+          USER_POOL_ID: !Ref cognitoUserPoolId
+          CLIENT_ID: !Ref cognitoClientId
+          CLIENT_SECRET: !Ref cognitoClientSecret
+
+  LoginInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LoginFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/login"
+
+  AuthAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - CreateUserMethod
+      - VerifyUserMethod
+      - LoginMethod
+    Properties:
+      RestApiId: !Ref restApiId
+      StageName: !Ref apiStageName
