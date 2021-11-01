@@ -315,6 +315,53 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/confirm_forgot_password"
     
+  ### /auth/respond_to_auth_challenge ###
+  RespondToAuthChallengeResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref restApiId
+      ParentId: !Ref AuthResource
+      PathPart: respond_to_auth_challenge
+  
+  RespondToAuthChallengeMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt RespondToAuthChallengeFunction.Arn
+      ResourceId: !Ref RespondToAuthChallengeResource
+      RestApiId: !Ref restApiId
+
+  RespondToAuthChallengeFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./respond_to_auth_challenge/
+      Description: 'A function for responding to auth challenges'
+      MemorySize: 128
+      Timeout: 3
+      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Environment:
+        Variables:
+          PYTHONPATH: !Ref pythonPath
+          USER_POOL_ID: !Ref cognitoUserPoolId
+          CLIENT_ID: !Ref cognitoClientId
+          CLIENT_SECRET: !Ref cognitoClientSecret
+
+  RespondToAuthChallengeInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref RespondToAuthChallengeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/respond_to_auth_challenge"
+
   AuthAPIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
@@ -324,6 +371,7 @@ Resources:
       - ChangePasswordMethod
       - ForgotPasswordMethod
       - ConfirmForgotPasswordMethod
+      - RespondToAuthChallengeMethod
     Properties:
       RestApiId: !Ref restApiId
       StageName: !Ref apiStageName
