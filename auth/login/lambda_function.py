@@ -79,13 +79,23 @@ def lambda_handler(event, context):
                 "body": "Error. Please try again later"
             }
         finally:
-            return {
-                "statusCode": 200,
-                "body": json.dumps({
-                    "id_token": resp["AuthenticationResult"]["IdToken"],
-                    "refresh_token": resp["AuthenticationResult"]["RefreshToken"],
-                    "access_token": resp["AuthenticationResult"]["AccessToken"],
-                    "expires_in": resp["AuthenticationResult"]["ExpiresIn"],
-                    "token_type": resp["AuthenticationResult"]["TokenType"]
-                })
-            }
+            if "AuthenticationResult" in resp:
+                return {
+                    "statusCode": 200,
+                    "body": json.dumps({
+                        "id_token": resp["AuthenticationResult"]["IdToken"],
+                        "refresh_token": resp["AuthenticationResult"]["RefreshToken"],
+                        "access_token": resp["AuthenticationResult"]["AccessToken"],
+                        "expires_in": resp["AuthenticationResult"]["ExpiresIn"],
+                        "token_type": resp["AuthenticationResult"]["TokenType"]
+                    })
+                }
+            elif "ChallengeName" in resp:
+                return {
+                    "statusCode": 200,
+                    "body": json.dumps({
+                        "ChallengeName": resp['ChallengeName'],
+                        "ChallengeParameters": resp['ChallengeParameters'],
+                        "Session": resp["Session"]
+                    })
+                }
