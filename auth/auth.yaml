@@ -268,6 +268,53 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/forgot_password"
 
+  ### /auth/confirm_forgot_password ###
+  ConfirmForgotPasswordResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref restApiId
+      ParentId: !Ref AuthResource
+      PathPart: confirm_forgot_password
+  
+  ConfirmForgotPasswordMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt ConfirmForgotPasswordFunction.Arn
+      ResourceId: !Ref ConfirmForgotPasswordResource
+      RestApiId: !Ref restApiId
+
+  ConfirmForgotPasswordFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./confirm_forgot_password/
+      Description: 'A function for responding to auth challenges'
+      MemorySize: 128
+      Timeout: 3
+      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Environment:
+        Variables:
+          PYTHONPATH: !Ref pythonPath
+          USER_POOL_ID: !Ref cognitoUserPoolId
+          CLIENT_ID: !Ref cognitoClientId
+          CLIENT_SECRET: !Ref cognitoClientSecret
+
+  ConfirmForgotPasswordInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ConfirmForgotPasswordFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/confirm_forgot_password"
+    
   AuthAPIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
@@ -276,6 +323,7 @@ Resources:
       - LoginMethod
       - ChangePasswordMethod
       - ForgotPasswordMethod
+      - ConfirmForgotPasswordMethod
     Properties:
       RestApiId: !Ref restApiId
       StageName: !Ref apiStageName
