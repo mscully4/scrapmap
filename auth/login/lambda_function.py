@@ -15,8 +15,6 @@ def get_secret_hash(username, client_id, client_secret):
 
 
 def lambda_handler(event, context):
-
-        print(json.dumps(event))
         # Validate Environment Variables
         for env_var in ("CLIENT_ID", "CLIENT_SECRET", "USER_POOL_ID"):
             if env_var not in os.environ:
