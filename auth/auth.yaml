@@ -362,6 +362,53 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/respond_to_auth_challenge"
 
+  ### resend_verification_code ###
+  AuthResendVerificationCodeResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref restApiId
+      ParentId: !Ref AuthResource
+      PathPart: resend_verification_code
+  
+  ResendVerificationCodeMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt ResendVerificationCodeFunction.Arn
+      ResourceId: !Ref AuthResendVerificationCodeResource
+      RestApiId: !Ref restApiId
+
+  ResendVerificationCodeFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./resend_verification_code/
+      Description: 'A function for resending the verification code'
+      MemorySize: 128
+      Timeout: 3
+      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Environment:
+        Variables:
+          PYTHONPATH: !Ref pythonPath
+          USER_POOL_ID: !Ref cognitoUserPoolId
+          CLIENT_ID: !Ref cognitoClientId
+          CLIENT_SECRET: !Ref cognitoClientSecret
+
+  ResendVerificationCodeInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ResendVerificationCodeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/resend_verification_code"
+
   AuthAPIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
@@ -372,6 +419,7 @@ Resources:
       - ForgotPasswordMethod
       - ConfirmForgotPasswordMethod
       - RespondToAuthChallengeMethod
+      - ResendVerificationCodeMethod
     Properties:
       RestApiId: !Ref restApiId
       StageName: !Ref apiStageName
