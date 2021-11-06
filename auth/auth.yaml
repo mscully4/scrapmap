@@ -158,7 +158,7 @@ Resources:
       Description: 'A function for generating authorization tokens'
       MemorySize: 128
       Timeout: 3
-      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Role: !GetAtt LambdaAuthIAMRole.Arn
       Environment:
         Variables:
           PYTHONPATH: !Ref pythonPath
@@ -205,7 +205,7 @@ Resources:
       Description: 'A function for responding to auth challenges'
       MemorySize: 128
       Timeout: 3
-      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Role: !GetAtt LambdaAuthIAMRole.Arn
       Environment:
         Variables:
           PYTHONPATH: !Ref pythonPath
@@ -252,7 +252,7 @@ Resources:
       Description: 'A function for resending the verification code'
       MemorySize: 128
       Timeout: 3
-      Role: 'arn:aws:iam::735029168602:role/Travelmap-Lambda'
+      Role: !GetAtt LambdaAuthIAMRole.Arn
       Environment:
         Variables:
           PYTHONPATH: !Ref pythonPath
@@ -299,7 +299,7 @@ Resources:
       Description: 'A function for responding to auth challenges'
       MemorySize: 128
       Timeout: 3
-      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Role: !GetAtt LambdaAuthIAMRole.Arn
       Environment:
         Variables:
           PYTHONPATH: !Ref pythonPath
@@ -346,7 +346,7 @@ Resources:
       Description: 'A function for responding to auth challenges'
       MemorySize: 128
       Timeout: 3
-      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Role: !GetAtt LambdaAuthIAMRole.Arn
       Environment:
         Variables:
           PYTHONPATH: !Ref pythonPath
@@ -393,7 +393,7 @@ Resources:
       Description: 'A function for resending the verification code'
       MemorySize: 128
       Timeout: 3
-      Role: 'arn:aws:iam::735029168602:role/ScrapMap-Lambda-Auth'
+      Role: !GetAtt LambdaAuthIAMRole.Arn
       Environment:
         Variables:
           PYTHONPATH: !Ref pythonPath
@@ -408,6 +408,40 @@ Resources:
       FunctionName: !Ref ResendVerificationCodeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/auth/resend_verification_code"
+
+  LambdaAuthIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: 
+              Service: 
+                - lambda.amazonaws.com
+            Action:
+                - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cognito-idp:AdminInitiateAuth"
+                  - "cognito-idp:SignUp"
+                  - "cognito-idp:ConfirmSignUp"
+                  - "cognito-idp:ConfirmForgotPassword"
+                  - "cognito-idp:DeleteUser"
+                  - "cognito-idp:ForgotPassword"
+                  - "cognito-idp:ResendConfirmationCode"
+                  - "cognito-idp:RespondToAuthChallenge"
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "logs:DescribeLogStreams"
+                Resource: "*"
 
   AuthAPIDeployment:
     Type: AWS::ApiGateway::Deployment
