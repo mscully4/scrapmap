@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: ""
+
+Parameters:
+  pythonPath:
+    Type: String
+  pythonVersion:
+    Type: String
+  apiStageName:
+    Type: String
+  rootResourceId:
+    Type: String
+  restApiId:
+    Type: String
+  dynamoTableArn:
+    Type: String
+  dynamoTableName:
+    Type: String
+
+Resources:
+  ### /api Resource ###
+  APIResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref restApiId
+      ParentId: !Ref rootResourceId
+      PathPart: api

@@ -63,4 +63,16 @@ Resources:
         cognitoUserPoolId: !Ref cognitoUserPoolId
         cognitoClientId: !Ref cognitoClientId
         cognitoClientSecret: !Ref cognitoClientSecret
+  API:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties: 
+      TemplateURL: ./api/api.yaml
+      Parameters:
+        apiStageName: !Ref apiStageName
+        rootResourceId: !GetAtt ScrapMapAPIs.RootResourceId
+        restApiId: !Ref ScrapMapAPIs
+        pythonPath: !Ref pythonPath
+        pythonVersion: !Ref pythonVersion
+        dynamoTableArn: !GetAtt ScrapMapDynamoTable.Arn
+        dynamoTableName: !Ref dynamoTableName
 
