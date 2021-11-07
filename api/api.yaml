@@ -17,6 +17,8 @@ Parameters:
     Type: String
   dynamoTableName:
     Type: String
+  authorizerId: 
+    Type: String
 
 Resources:
   ### /api Resource ###
@@ -99,7 +101,8 @@ Resources:
   DestinationsGetMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref authorizerId
       HttpMethod: GET
       Integration:
         IntegrationHttpMethod: POST
@@ -136,7 +139,8 @@ Resources:
   DestinationsPostMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref authorizerId
       HttpMethod: POST
       Integration:
         IntegrationHttpMethod: POST
