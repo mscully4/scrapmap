@@ -75,4 +75,15 @@ Resources:
         pythonVersion: !Ref pythonVersion
         dynamoTableArn: !GetAtt ScrapMapDynamoTable.Arn
         dynamoTableName: !Ref dynamoTableName
+        authorizerId: !Ref APIAuthorizer
+
+  APIAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties: 
+      IdentitySource: method.request.header.Authorization
+      Name: ScrapMapUserAuthorizer
+      ProviderARNs: 
+        - arn:aws:cognito-idp:us-east-2:735029168602:userpool/us-east-2_mqMa6IhU7
+      RestApiId: !Ref ScrapMapAPIs
+      Type: COGNITO_USER_POOLS
 
