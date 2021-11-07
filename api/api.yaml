@@ -87,3 +87,10 @@ Resources:
                   - "logs:PutLogEvents"
                   - "logs:DescribeLogStreams"
                 Resource: "*"
+
+  # /api Deployment
+  APIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref restApiId
+      StageName: !Ref apiStageName
