@@ -132,11 +132,50 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/GET/api/destinations"
 
+  # POST /api/destinations
+  DestinationsPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt DestinationsPostFunction.Arn
+      ResourceId: !Ref DestinationsResource
+      RestApiId: !Ref restApiId
+
+  DestinationsPostFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./destinations/post/
+      Description: "A function for retrieving a user's Destinations"
+      MemorySize: 128
+      Timeout: 3
+      Role: !GetAtt LambdaDynamoWriteOnlyRole.Arn
+      Environment:
+        Variables:
+          PYTHONPATH: !Ref pythonPath
+          DYNAMO_TABLE_NAME: !Ref dynamoTableName
+
+  DestinationsPostInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DestinationsPostFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/api/destinations"
+
   # /api Deployment
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
       - DestinationsGetMethod
+      - DestinationsPostMethod
     Properties:
       RestApiId: !Ref restApiId
       StageName: !Ref apiStageName
