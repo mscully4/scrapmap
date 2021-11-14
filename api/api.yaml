@@ -90,6 +90,39 @@ Resources:
                   - "logs:DescribeLogStreams"
                 Resource: "*"
 
+  # Delete role for Dynamo
+  LambdaDynamoDeleteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: 
+              Service: 
+                - lambda.amazonaws.com
+            Action:
+                - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:GetItem"
+                  - "dynamodb:BatchGetItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                  - "dynamodb:ConditionCheckItem"
+                  - "dynamodb:DeleteItem"
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "logs:DescribeLogStreams"
+                Resource: "*"
+
   ### GET /api/destinations ###
   DestinationsResource:
     Type: 'AWS::ApiGateway::Resource'
@@ -174,12 +207,58 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/POST/api/destinations"
 
+  # DELETE /api/destinations
+  DestinationsDeleteMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref authorizerId
+      RequestParameters:
+        method.request.querystring.destination_id: true
+      RequestValidatorId: !Ref DestinationsRequestValidator
+      HttpMethod: DELETE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt DestinationsDeleteFunction.Arn
+      ResourceId: !Ref DestinationsResource
+      RestApiId: !Ref restApiId
+
+  DestinationsDeleteFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./destinations/delete/
+      Description: "A function for deleting a user's Destination"
+      MemorySize: 128
+      Timeout: 3
+      Role: !GetAtt LambdaDynamoDeleteRole.Arn
+      Environment:
+        Variables:
+          DYNAMO_TABLE_NAME: !Ref dynamoTableName
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPython:3
+
+
+  DestinationsDeleteInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DestinationsDeleteFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/DELETE/api/destinations"
+
+
   # /api Deployment
   APIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
       - DestinationsGetMethod
       - DestinationsPostMethod
+      - DestinationsDeleteMethod
     Properties:
       RestApiId: !Ref restApiId
       StageName: !Ref apiStageName
