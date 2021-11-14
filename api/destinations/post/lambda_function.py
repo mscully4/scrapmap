@@ -8,6 +8,7 @@ from decimal import Decimal
 
 @dataclass
 class Destination:
+    username: str
     destination_id: str
     name: str
     country: str
@@ -20,12 +21,16 @@ class Destination:
         for field in fields(self):
             value = getattr(self, field.name)
             if not isinstance(value, field.type):
-                setattr(self, field.name, field.type(value))
+                try:
+                    setattr(self, field.name, field.type(value))
+                except BaseException as e:
+                    logger.error(f"{field.name} can't be converted to {field.type}")
+                    raise
 
     def serialize(self):
         return {
-            "PK": "test",
-            "SK": self.destination_id,
+            "PK": self.username,
+            "SK": f"{self.destination_id}###DESTINATION",
             "Entity": {
                 "name": self.name,
                 "country": self.country,
@@ -46,7 +51,7 @@ def lambda_handler(event, context):
     table = client.Table(table_name)
     
     try:
-        destination = Destination(**body)
+        destination = Destination(username=username, **body)
         table.put_item(Item=destination.serialize())
     except Exception as e:
         print(e)
