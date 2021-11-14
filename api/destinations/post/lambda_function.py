@@ -38,6 +38,8 @@ class Destination:
 
 def lambda_handler(event, context):
     table_name = os.environ['DYNAMO_TABLE_NAME']
+    username = event['requestContext']['authorizer']['claims']['cognito:username']
+
     body = json.loads(event['body'])
 
     client = boto3.resource('dynamodb')
