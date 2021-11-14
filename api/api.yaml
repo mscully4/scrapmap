@@ -136,6 +136,9 @@ Resources:
     Properties:
       AuthorizationType: NONE
       HttpMethod: GET
+      RequestParameters:
+        method.request.querystring.user: true
+      RequestValidatorId: !Ref DestinationsRequestValidator
       Integration:
         IntegrationHttpMethod: POST
         Type: AWS_PROXY
@@ -167,6 +170,13 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${restApiId}/*/GET/api/destinations"
 
+  DestinationsRequestValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      RestApiId: !Ref restApiId
+      ValidateRequestBody: true
+      ValidateRequestParameters: true
+
   # POST /api/destinations
   DestinationsPostMethod:
     Type: AWS::ApiGateway::Method
@@ -174,6 +184,7 @@ Resources:
       AuthorizationType: COGNITO_USER_POOLS
       AuthorizerId: !Ref authorizerId
       HttpMethod: POST
+      RequestValidatorId: !Ref DestinationsRequestValidator
       Integration:
         IntegrationHttpMethod: POST
         Type: AWS_PROXY
