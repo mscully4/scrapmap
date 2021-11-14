@@ -162,6 +162,8 @@ Resources:
         Variables:
           PYTHONPATH: !Ref pythonPath
           DYNAMO_TABLE_NAME: !Ref dynamoTableName
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPython:3
 
   DestinationsGetInvoke:
     Type: AWS::Lambda::Permission
