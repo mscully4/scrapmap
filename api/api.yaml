@@ -134,8 +134,7 @@ Resources:
   DestinationsGetMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      AuthorizationType: COGNITO_USER_POOLS
-      AuthorizerId: !Ref authorizerId
+      AuthorizationType: NONE
       HttpMethod: GET
       Integration:
         IntegrationHttpMethod: POST
