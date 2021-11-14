@@ -161,6 +161,7 @@ Resources:
       Environment:
         Variables:
           PYTHONPATH: !Ref pythonPath
+          DYNAMO_TABLE_NAME: !Ref dynamoTableName
 
   DestinationsGetInvoke:
     Type: AWS::Lambda::Permission
