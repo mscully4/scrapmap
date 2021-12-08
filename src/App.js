@@ -2,6 +2,13 @@ import logo from './logo.svg';
 import './App.css';
 import React, { memo, useEffect, useState } from 'react';
 import { refreshTokens } from './utils/backend'
+import {
+  BrowserRouter,
+  Route,
+  Routes
+} from "react-router-dom";
+
+import User from './views/User';
 
 const componentDidMount = (setters) => {
   if (localStorage.lastAuthUser) {
@@ -31,21 +38,12 @@ function App(props) {
     componentDidMount(setters)
   }, [])
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <BrowserRouter>
+        <Routes>
+          <Route path=":user" element={<User />} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
